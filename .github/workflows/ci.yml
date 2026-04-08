@@ -32,31 +32,31 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy-to-local:
+    deploy-to-local:
     name: Deploy to Local Windows Machine
     needs: build-and-push-docker-image
     runs-on: [self-hosted, Windows, X64]
 
     steps:
       - name: Login to Docker Hub
-        shell: pwsh
+        shell: powershell
         run: |
-          "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
 
       - name: Pull latest image
-        shell: pwsh
+        shell: powershell
         run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
 
       - name: Stop existing container
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
         run: docker stop news-analysis-api
 
       - name: Remove existing container
-        shell: pwsh
+        shell: powershell
         continue-on-error: true
         run: docker rm news-analysis-api
 
       - name: Run new container
-        shell: pwsh
+        shell: powershell
         run: docker run -d -p 8000:8000 --name news-analysis-api ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
