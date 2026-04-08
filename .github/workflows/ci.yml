@@ -32,7 +32,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-    deploy-to-local:
+  deploy-to-local:
     name: Deploy to Local Windows Machine
     needs: build-and-push-docker-image
     runs-on: [self-hosted, Windows, X64]
