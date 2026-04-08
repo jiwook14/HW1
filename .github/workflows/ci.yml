@@ -1,6 +1,5 @@
-name: Build and Push to Docker Hub
+name: Build, Push, and Deploy
 
-# Trigger workflow on pushes to the main branch
 on:
   push:
     branches:
@@ -8,7 +7,7 @@ on:
 
 jobs:
   build-and-push-docker-image:
-    name: Build Docker image and push to repositories
+    name: Build and Push Docker image
     runs-on: ubuntu-latest
 
     steps:
@@ -16,7 +15,6 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Docker Buildx
-        # Sets up Docker Buildx to allow optimized multi-platform builds if needed
         uses: docker/setup-buildx-action@v3
 
       - name: Login to Docker Hub
@@ -30,8 +28,35 @@ jobs:
         with:
           context: .
           push: true
-          # Tags the image with the user's username and 'mlops-api:latest'
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/mlops-api:latest
-          # Helps speed up subsequent builds by using GitHub Actions cache
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-to-local:
+    name: Deploy to Local Windows Machine
+    needs: build-and-push-docker-image
+    runs-on: [self-hosted, Windows, X64]
+
+    steps:
+      - name: Login to Docker Hub
+        shell: pwsh
+        run: |
+          "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+
+      - name: Pull latest image
+        shell: pwsh
+        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
+
+      - name: Stop existing container
+        shell: pwsh
+        continue-on-error: true
+        run: docker stop news-analysis-api
+
+      - name: Remove existing container
+        shell: pwsh
+        continue-on-error: true
+        run: docker rm news-analysis-api
+
+      - name: Run new container
+        shell: pwsh
+        run: docker run -d -p 8000:8000 --name news-analysis-api ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
