@@ -39,24 +39,30 @@ jobs:
 
     steps:
       - name: Login to Docker Hub
-        shell: powershell
-        run: |
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
+        shell: cmd
+        run: echo %DOCKERHUB_TOKEN% | docker login -u %DOCKERHUB_USERNAME% --password-stdin
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Pull latest image
-        shell: powershell
-        run: docker pull ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
+        shell: cmd
+        run: docker pull %DOCKERHUB_USERNAME%/news-analysis-api:latest
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
 
       - name: Stop existing container
-        shell: powershell
+        shell: cmd
         continue-on-error: true
         run: docker stop news-analysis-api
 
       - name: Remove existing container
-        shell: powershell
+        shell: cmd
         continue-on-error: true
         run: docker rm news-analysis-api
 
       - name: Run new container
-        shell: powershell
-        run: docker run -d -p 8000:8000 --name news-analysis-api ${{ secrets.DOCKERHUB_USERNAME }}/news-analysis-api:latest
+        shell: cmd
+        run: docker run -d -p 8000:8000 --name news-analysis-api %DOCKERHUB_USERNAME%/news-analysis-api:latest
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
